@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+require 'thor'
+require 'yaml'
+require 'catch'
+
+class Kech < Thor
+  
+  def self.get_credentials
+    if File.exists?('credentials')
+      credentials = YAML::load_file('credentials')
+    else 
+      Kech.set_credentials('','')
+      false
+    end
+  end
+  
+  def self.set_credentials(user, pass)
+    credentials = File.open('credentials', 'w')
+    credentials.write(YAML::dump( { :user => user, :pass => pass }))
+    credentials.close
+  end
+  
+  def self.get_client
+    credentials = Kech.get_credentials
+    Catch::Client.new :username => credentials[:user], :password => credentials[:pass]
+  end
+  
+  desc "config", "configures user credentials"
+  def config(user, pass)
+    Kech.set_credentials(user, pass)
+  end
+  
+  desc "status", "output current auth status"
+  def status
+    puts "Logged in as " #TODO finish him!
+  end
+  
+  desc "note", "create a new note"
+  def note(*args)
+    client = Kech.get_client
+    text = args.join(" ")
+    client.add_note( { :text => text } )
+  end
+  
+  desc "fetch", "get all notes"
+  def fetch
+    puts "get all notes"
+  end
+  
+  desc "logout", "log out"
+  def logout
+    puts "get rid of login info"
+  end
+end
+
+Kech.start
