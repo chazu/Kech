@@ -4,18 +4,19 @@ require 'yaml'
 require 'catch'
 
 class Kech < Thor
-  
+  @@credentials_file_path = ENV["GEM_HOME"]
+  @@credentials_file = File.path(@@credentials_file_path + ".kech_config")
+
   def self.get_credentials
-    if File.exists?('credentials')
-      credentials = YAML::load_file('credentials')
-    else 
-      Kech.set_credentials('','')
+    if File.exists?(File.expand_path(@@credentials_file))
+      credentials = YAML::load_file(File.expand_path(@@credentials_file))
+    else
       false
     end
   end
-  
+
   def self.set_credentials(user, pass)
-    credentials = File.open('credentials', 'w')
+    credentials = File.open(File.expand_path(@@credentials_file), 'w')
     credentials.write(YAML::dump( { :user => user, :pass => pass }))
     credentials.close
   end
@@ -32,7 +33,7 @@ class Kech < Thor
   
   desc "status", "output current auth status"
   def status
-    puts "Logged in as " #TODO finish him!
+    puts "Logged in as " + ( Kech.get_credentials ? Kech.get_credentials[:user] : "Nobody" )
   end
   
   desc "note", "create a new note"
@@ -44,12 +45,13 @@ class Kech < Thor
   
   desc "fetch", "get all notes"
   def fetch
-    puts "get all notes"
+    client = Kech.get_client
+    client.notes
   end
   
   desc "logout", "log out"
   def logout
-    puts "get rid of login info"
+    Kech.set_credentials("", "")
   end
 end
 
